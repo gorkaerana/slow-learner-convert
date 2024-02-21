@@ -13,3 +13,22 @@ Currentlly four frameworks are supported:
 - [`attrs`](https://www.attrs.org/en/stable/index.html)
 - [`msgspec`](https://jcristharif.com/msgspec/)
 - [`pydantic`](https://docs.pydantic.dev/latest/)
+
+## Installation
+I'm hoping to publish this to PyPI. On the meantime:
+```bash
+git clone git@github.com:gorkaerana/slow_learner_convert.git
+cd slow_learner_convert
+python3 -m venv .venv
+. .venv/bin/activate
+python3 -m pip install -U pip
+python3 -m pip install .
+```
+
+## Development
+I used [`rye`](https://rye-up.com/) (with [`uv`](https://github.com/astral-sh/uv)) while developing this:
+```bash
+git clone git@github.com:gorkaerana/slow_learner_convert.git
+cd slow_learner_convert
+rye sync
+```
