@@ -27,7 +27,7 @@ def format_ast_import_from(node: ast.ImportFrom) -> str:
 
 @click.command()
 @click.option(
-    "--to",
+    "--framework",
     type=click.Choice(typing.get_args(Framework)),
     help="Framework to which to convert the input classes",
 )
@@ -35,26 +35,25 @@ def format_ast_import_from(node: ast.ImportFrom) -> str:
 @click.option(
     "--output-file",
     default=None,
-    help="Output file to write results. If empty, it defaults to {input_file}_{to}.py",
+    help="Output file to write results. If empty, it defaults to {input_file}_{framework}.py",
 )
-def cli(to: Framework, input_file: str, output_file: str | None):
-    import_lines = [f"import {to}" if to != "dataclass" else "import dataclasses"]
+def cli(framework: Framework, input_file: str, output_file: str | None):
+    import_lines = [f"import {framework}"]
     lines_of_code = []
     input_path = Path(input_file).resolve()
     output_path = Path(
-        input_path.parent / f"{input_path.stem}_{to}.py"
+        input_path.parent / f"{input_path.stem}_{framework}.py"
         if output_file is None
         else output_file
     ).resolve()
     for node in ast.walk(ast.parse(input_path.read_text())):
-        # print(ast.dump(node, indent=4))
         if isinstance(node, ast.Import):
             import_lines.append(format_ast_import(node))
         if isinstance(node, ast.ImportFrom):
             import_lines.append(format_ast_import_from(node))
         if isinstance(node, ast.ClassDef):
             lines_of_code.append("\n")
-            lines_of_code.extend(make_class_from_class_def(to, node))
+            lines_of_code.extend(make_class_from_class_def(framework, node))
         if (
             isinstance(node, ast.Assign)
             and isinstance(node.value, ast.Call)
@@ -62,7 +61,7 @@ def cli(to: Framework, input_file: str, output_file: str | None):
             and (node.value.func.id == "TypedDict")
         ):
             lines_of_code.append("\n")
-            lines_of_code.extend(make_class_from_assign(to, node))
+            lines_of_code.extend(make_class_from_assign(framework, node))
     output_path.write_text("\n".join(import_lines + lines_of_code))
 
 

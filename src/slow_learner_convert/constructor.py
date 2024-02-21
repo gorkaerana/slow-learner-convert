@@ -6,7 +6,7 @@ from attr._make import _CountingAttr
 import attrs
 
 
-Framework: TypeAlias = Literal["dataclass", "attrs", "msgspec", "pydantic"]
+Framework: TypeAlias = Literal["dataclasses", "attrs", "msgspec", "pydantic"]
 
 
 class _Nothing:
@@ -209,7 +209,7 @@ class PydanticConstructor(BaseConstructor):
 
 
 CLASS_DEF_CONSTRUCTORS: dict[Framework, Type[BaseConstructor]] = {
-    "dataclass": DataclassConstructor,
+    "dataclasses": DataclassConstructor,
     "attrs": AttrsConstructor,
     "msgspec": MsgspecConstructor,
     "pydantic": PydanticConstructor,
