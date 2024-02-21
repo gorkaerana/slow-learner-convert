@@ -1,8 +1,16 @@
 import ast
 from typing import Callable, Literal, TypeAlias, Type
 
+from attr._make import _CountingAttr
+import attrs
+
 
 Framework: TypeAlias = Literal["dataclass", "attrs", "msgspec", "pydantic"]
+
+
+class _Nothing:
+    pass
+
 
 INDENT = " " * 4
 
@@ -38,7 +46,7 @@ to define the attribute as `attrs.fields(default=something)`
 """
 
 
-def get_function_argument_names(function: Callable) -> tuple[str]:
+def get_function_argument_names(function: Callable) -> tuple[str, ...]:
     return function.__code__.co_varnames[: function.__code__.co_argcount]
 
 
@@ -96,33 +104,37 @@ class DataclassConstructor(BaseConstructor):
 class AttrsConstructor(BaseConstructor):
     def initial_lines_of_code(
         self,
-        these=None,
-        repr=None,
-        unsafe_hash=None,
-        hash=None,
-        init=None,
-        slots=None,
-        frozen=None,
-        weakref_slot=None,
-        str=None,
-        auto_attribs=None,
-        kw_only=None,
-        cache_hash=None,
-        auto_exc=None,
-        eq=None,
-        order=None,
-        auto_detect=None,
-        getstate_setstate=None,
-        on_setattr=None,
-        field_transformer=None,
-        match_args=None,
+        these: dict[str, "_CountingAttr"] | None | Type[_Nothing] = _Nothing,
+        repr: bool | None | Type[_Nothing] = _Nothing,
+        unsafe_hash: bool | None | Type[_Nothing] = _Nothing,
+        hash: bool | None | Type[_Nothing] = _Nothing,
+        init: bool | None | Type[_Nothing] = _Nothing,
+        slots: bool | None | Type[_Nothing] = _Nothing,
+        frozen: bool | None | Type[_Nothing] = _Nothing,
+        weakref_slot: bool | None | Type[_Nothing] = _Nothing,
+        str: bool | None | Type[_Nothing] = _Nothing,
+        auto_attribs: bool | None | Type[_Nothing] = _Nothing,
+        kw_only: bool | None | Type[_Nothing] = _Nothing,
+        cache_hash: bool | None | Type[_Nothing] = _Nothing,
+        auto_exc: bool | None | Type[_Nothing] = _Nothing,
+        eq: bool | None | Type[_Nothing] = _Nothing,
+        order: bool | None | Type[_Nothing] = _Nothing,
+        auto_detect: bool | None | Type[_Nothing] = _Nothing,
+        getstate_setstate: bool | None | Type[_Nothing] = _Nothing,
+        on_setattr: Callable
+        | list[Callable]
+        | "attrs.setters._NoOpType"
+        | None
+        | Type[_Nothing] = _Nothing,
+        field_transformer: Callable | None | Type[_Nothing] = _Nothing,
+        match_args: bool | None | Type[_Nothing] = _Nothing,
     ):
         """Keyword arguments match those of `attrs.define`. See
         https://www.attrs.org/en/stable/api.html#attrs.define"""
         decorator = "@define"
         decorator_kwargs = []
         for k in get_function_argument_names(self.initial_lines_of_code):
-            if ((value := locals()[k]) is not None) and (k != "self"):
+            if ((value := locals()[k]) is not _Nothing) and (k != "self"):
                 decorator_kwargs.append(f"{k}={value}")
         if decorator_kwargs:
             prettied_decorator_kwargs = "\n".join(decorator_kwargs)
