@@ -1,7 +1,6 @@
 import ast
 from pathlib import Path
 from pprint import pprint
-import sys
 
 import click
 
