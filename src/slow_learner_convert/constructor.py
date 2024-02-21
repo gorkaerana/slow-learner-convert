@@ -1,5 +1,5 @@
 import ast
-from typing import Literal, TypeAlias, Type
+from typing import Callable, Literal, TypeAlias, Type
 
 
 Framework: TypeAlias = Literal["dataclass", "attrs", "msgspec", "pydantic"]
@@ -36,6 +36,10 @@ if type assignment `Literal[something]` maybe it would be useful
 to define the attribute as `attrs.fields(default=something)`
 
 """
+
+
+def get_function_argument_names(function: Callable) -> tuple[str]:
+    return function.__code__.co_varnames[: function.__code__.co_argcount]
 
 
 class BaseConstructor:
@@ -78,22 +82,10 @@ class DataclassConstructor(BaseConstructor):
     ) -> list[str]:
         """Keyword arguments mimic those of `dataclasses.dataclass`. See
         https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass"""
-        kwargs = (
-            "init",
-            "repr",
-            "eq",
-            "order",
-            "unsafe_hash",
-            "frozen",
-            "match_args",
-            "kw_only",
-            "slots",
-            "weakref_slot",
-        )
         decorator = "@dataclass"
         decorator_kwargs = []
-        for k in kwargs:
-            if (value := locals()[k]) is not None:
+        for k in get_function_argument_names(self.initial_lines_of_code):
+            if (k != "self") and ((value := locals()[k]) is not None):
                 decorator_kwargs.append(f"{k}={value}")
         if decorator_kwargs:
             prettied_decorator_kwargs = "\n".join(decorator_kwargs)
@@ -127,32 +119,10 @@ class AttrsConstructor(BaseConstructor):
     ):
         """Keyword arguments match those of `attrs.define`. See
         https://www.attrs.org/en/stable/api.html#attrs.define"""
-        kwargs = (
-            "these",
-            "repr",
-            "unsafe_hash",
-            "hash",
-            "init",
-            "slots",
-            "frozen",
-            "weakref_slot",
-            "str",
-            "auto_attribs",
-            "kw_only",
-            "cache_hash",
-            "auto_exc",
-            "eq",
-            "order",
-            "auto_detect",
-            "getstate_setstate",
-            "on_setattr",
-            "field_transformer",
-            "match_args",
-        )
         decorator = "@define"
         decorator_kwargs = []
-        for k in kwargs:
-            if (value := locals()[k]) is not None:
+        for k in get_function_argument_names(self.initial_lines_of_code):
+            if ((value := locals()[k]) is not None) and (k != "self"):
                 decorator_kwargs.append(f"{k}={value}")
         if decorator_kwargs:
             prettied_decorator_kwargs = "\n".join(decorator_kwargs)
