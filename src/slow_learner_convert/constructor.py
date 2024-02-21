@@ -50,6 +50,35 @@ def get_function_argument_names(function: Callable) -> tuple[str, ...]:
     return function.__code__.co_varnames[: function.__code__.co_argcount]
 
 
+def format_ast_subscript(node: ast.Subscript):
+    value, slice_ = node.value, node.slice
+    if isinstance(value, ast.Name):
+        formatted_value = value.id
+    else:
+        raise NotImplementedError(
+            f"`ast.Subscript.value` of type {type(value)} not supported"
+        )
+    if isinstance(slice_, ast.Name):
+        formatted_slice = slice_.id
+    elif isinstance(slice_, ast.Constant):
+        formatted_slice = repr(slice_.value)
+    elif isinstance(slice_, ast.Tuple):
+        parts = []
+        for e in slice_.elts:
+            if isinstance(e, ast.Subscript):
+                parts.append(format_ast_subscript(e))
+            else:
+                raise NotImplementedError(
+                    f"Element for `ast.Subscript.slice.Tuple` of type {type(e)} not supported"
+                )
+        formatted_slice = ", ".join(parts)
+    else:
+        raise NotImplementedError(
+            f"`ast.Subscript.slice` of type {type(value)} not supported"
+        )
+    return f"{formatted_value}[{formatted_slice}]"
+
+
 class BaseClassDefConstructor:
     def __init__(self, class_name: str):
         self.class_name: str = class_name
@@ -58,15 +87,30 @@ class BaseClassDefConstructor:
     def initial_lines_of_code(self, *args, **kwargs) -> list[str]:
         raise NotImplementedError
 
-    def get_attribute_name(self, name: ast.AnnAssign) -> str:
-        # TODO: need to support `ast.Name`, `ast.Attribute`, `ast.Subscript`
-        # before removing type ignore below
-        return name.target.id  # type: ignore
+    def get_attribute_name(self, node: ast.AnnAssign):
+        # TODO: support more `ast` types for `node.target`
+        if isinstance(node.target, ast.Name):
+            return node.target.id
+        else:
+            message = (
+                f"{type(node.target)} not supported. Full node:\n"
+                f"{ast.dump(node, indent=4)}"
+            )
+            raise NotImplementedError(message)
 
-    def get_type_annotation(self, name: ast.AnnAssign) -> str:
-        # TODO: need to support `ast.Constant`, and `ast.Name`
-        # before removing type ignore below
-        return name.annotation.id  # type: ignore
+    def get_type_annotation(self, node: ast.AnnAssign) -> str:
+        # TODO: `ast` types for `node.annotation`. E.g., `ast.Constant`, `ast.Attribute`
+        annotation = node.annotation
+        if isinstance(annotation, ast.Name):
+            return annotation.id
+        elif isinstance(annotation, ast.Subscript):
+            return format_ast_subscript(annotation)
+        else:
+            message = (
+                f"{type(node.annotation)} not supported. Full node:\n"
+                f"{ast.dump(node, indent=4)}"
+            )
+            raise NotImplementedError(message)
 
     def add_attribute(self, node: ast.AnnAssign):
         self.lines_of_code.append(
@@ -166,11 +210,9 @@ def make_class_from_class_def(framework: Framework, class_def: ast.ClassDef):
         raise NotImplementedError(f"Framework '{framework}' is not supported.")
     constructor = constructor_class(class_def.name)
     for node in class_def.body:
-        # TODO: might have to support different `ast` types
-        if (
-            isinstance(node, ast.AnnAssign)
-            and isinstance(node.target, ast.Name)
-            and isinstance(node.annotation, ast.Name)
-        ):
+        if isinstance(node, ast.AnnAssign):
             constructor.add_attribute(node)
+        else:
+            message = f"ast.ClassDef body element of type {type(node)} not supported."
+            raise NotImplementedError(message)
     return constructor.lines_of_code
