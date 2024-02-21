@@ -19,37 +19,6 @@ class InvalidObjectAttribute(Warning):
 
 INDENT = " " * 4
 
-"""
-TODO: given a variable assignment (after the type assignment), support adding that
-value as default via library specific default. E.g., given
-```
-class Foo(TypedDict):
-    bar: SomeType = instance_of_the_type
-```
-create
-```
-@dataclasses.dataclass
-class Foo:
-    bar: SomeType = dataclasses.field(default=instance_of_the_type)
-```
-
-TODO: given specific type assignments, support framework-specific features.
-E.g., given
-```
-class Foo(TypedDict):
-    bar: Literal["something"]
-```
-create
-```
-@dataclasses.dataclass
-class Foo:
-    bar: SomeType = dataclasses.field(default="something")
-```
-if type assignment `Literal[something]` maybe it would be useful
-to define the attribute as `attrs.fields(default=something)`
-
-"""
-
 
 def get_function_argument_names(function: Callable) -> tuple[str, ...]:
     return function.__code__.co_varnames[: function.__code__.co_argcount]
