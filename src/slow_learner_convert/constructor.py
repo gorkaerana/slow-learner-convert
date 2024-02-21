@@ -1,5 +1,6 @@
 import ast
 from typing import Callable, Literal, TypeAlias, Type
+import warnings
 
 from attr._make import _CountingAttr
 import attrs
@@ -9,6 +10,10 @@ Framework: TypeAlias = Literal["dataclass", "attrs", "msgspec", "pydantic"]
 
 
 class _Nothing:
+    pass
+
+
+class InvalidObjectAttribute(Warning):
     pass
 
 
@@ -79,7 +84,7 @@ def format_ast_subscript(node: ast.Subscript):
     return f"{formatted_value}[{formatted_slice}]"
 
 
-class BaseClassDefConstructor:
+class BaseConstructor:
     def __init__(self, class_name: str):
         self.class_name: str = class_name
         self.lines_of_code: list[str] = self.initial_lines_of_code()
@@ -87,38 +92,44 @@ class BaseClassDefConstructor:
     def initial_lines_of_code(self, *args, **kwargs) -> list[str]:
         raise NotImplementedError
 
-    def get_attribute_name(self, node: ast.AnnAssign):
-        # TODO: support more `ast` types for `node.target`
-        if isinstance(node.target, ast.Name):
-            return node.target.id
+    def get_attribute_name(
+        self, target: ast.Name | ast.Constant | ast.Attribute | ast.Subscript
+    ):
+        # ast.Attribute, and ast.Subscript pleases mypy
+        if isinstance(target, ast.Name):
+            return target.id
+        elif isinstance(target, ast.Constant):
+            return repr(target.value)
         else:
-            message = (
-                f"{type(node.target)} not supported. Full node:\n"
-                f"{ast.dump(node, indent=4)}"
-            )
-            raise NotImplementedError(message)
+            raise NotImplementedError(f"{type(target)} not supported")
 
-    def get_type_annotation(self, node: ast.AnnAssign) -> str:
-        # TODO: `ast` types for `node.annotation`. E.g., `ast.Constant`, `ast.Attribute`
-        annotation = node.annotation
+    def get_type_annotation(
+        self, annotation: ast.Name | ast.Subscript | ast.expr
+    ) -> str:
+        # ast.expr pleases mypy
         if isinstance(annotation, ast.Name):
             return annotation.id
         elif isinstance(annotation, ast.Subscript):
             return format_ast_subscript(annotation)
         else:
-            message = (
-                f"{type(node.annotation)} not supported. Full node:\n"
-                f"{ast.dump(node, indent=4)}"
-            )
-            raise NotImplementedError(message)
+            raise NotImplementedError(f"{type(annotation)} not supported.")
 
-    def add_attribute(self, node: ast.AnnAssign):
+    def add_attribute_from_node(self, node: ast.AnnAssign):
         self.lines_of_code.append(
-            f"{INDENT}{self.get_attribute_name(node)}: {self.get_type_annotation(node)}"
+            f"{INDENT}{self.get_attribute_name(node.target)}: {self.get_type_annotation(node.annotation)}"
+        )
+
+    def add_attribute_from_elements(
+        self,
+        attribute_name: ast.Name | ast.Constant,
+        type_annotation: ast.Name | ast.Subscript,
+    ):
+        self.lines_of_code.append(
+            f"{INDENT}{self.get_attribute_name(attribute_name)}: {self.get_type_annotation(type_annotation)}"
         )
 
 
-class DataclassClassDefConstructor(BaseClassDefConstructor):
+class DataclassConstructor(BaseConstructor):
     def initial_lines_of_code(
         self,
         init: bool | None = None,
@@ -145,7 +156,7 @@ class DataclassClassDefConstructor(BaseClassDefConstructor):
         return [decorator, f"class {self.class_name}:"]
 
 
-class AttrsClassDefConstructor(BaseClassDefConstructor):
+class AttrsConstructor(BaseConstructor):
     def initial_lines_of_code(
         self,
         these: dict[str, "_CountingAttr"] | None | Type[_Nothing] = _Nothing,
@@ -186,21 +197,21 @@ class AttrsClassDefConstructor(BaseClassDefConstructor):
         return [decorator, f"class {self.class_name}:"]
 
 
-class MsgspecClassDefConstructor(BaseClassDefConstructor):
+class MsgspecConstructor(BaseConstructor):
     def initial_lines_of_code(self):
         return [f"class {self.class_name}(msgspec.Struct):"]
 
 
-class PydanticClassDefConstructor(BaseClassDefConstructor):
+class PydanticConstructor(BaseConstructor):
     def initial_lines_of_code(self):
         return [f"class {self.class_name}(BaseModel):"]
 
 
-CLASS_DEF_CONSTRUCTORS: dict[Framework, Type[BaseClassDefConstructor]] = {
-    "dataclass": DataclassClassDefConstructor,
-    "attrs": AttrsClassDefConstructor,
-    "msgspec": MsgspecClassDefConstructor,
-    "pydantic": PydanticClassDefConstructor,
+CLASS_DEF_CONSTRUCTORS: dict[Framework, Type[BaseConstructor]] = {
+    "dataclass": DataclassConstructor,
+    "attrs": AttrsConstructor,
+    "msgspec": MsgspecConstructor,
+    "pydantic": PydanticConstructor,
 }
 
 
@@ -211,8 +222,39 @@ def make_class_from_class_def(framework: Framework, class_def: ast.ClassDef):
     constructor = constructor_class(class_def.name)
     for node in class_def.body:
         if isinstance(node, ast.AnnAssign):
-            constructor.add_attribute(node)
+            constructor.add_attribute_from_node(node)
         else:
             message = f"ast.ClassDef body element of type {type(node)} not supported."
             raise NotImplementedError(message)
+    return constructor.lines_of_code
+
+
+def make_class_from_assign(framework: Framework, assign: ast.Assign):
+    constructor_class = CLASS_DEF_CONSTRUCTORS.get(framework)
+    if constructor_class is None:
+        raise NotImplementedError(f"Framework '{framework}' is not supported.")
+    # TODO: don't please mypy by hacking
+    assert isinstance(assign.targets[0], ast.Name)
+    # Class name could also be `assign.value.args[0].id`
+    constructor = constructor_class(assign.targets[0].id)
+    # First element of `assign.value.args` is the class name
+    assert isinstance(assign.value, ast.Call)
+    assert isinstance(assign.value.args[1], ast.Dict)
+    for key, value in zip(assign.value.args[1].keys, assign.value.args[1].values):
+        if not isinstance(key, ast.Name | ast.Constant):
+            message = f"ast.Assign.value.args[1].keys elements of type {type(key)} not supported."
+            raise NotImplementedError(message)
+        elif not isinstance(value, ast.Name | ast.Subscript):
+            message = f"ast.Assign.value.args[1].values elements of type {type(key)} not supported."
+            raise NotImplementedError(message)
+        if (isinstance(key, ast.Name) and not key.id.isidentifier()) or (
+            isinstance(key, ast.Constant) and not key.value.isidentifier()
+        ):
+            v = key.value if isinstance(key, ast.Constant) else key.id
+            warnings.warn(
+                f"{repr(v)}' is not a valid object attribute name. Skipping it.",
+                InvalidObjectAttribute,
+            )
+            continue
+        constructor.add_attribute_from_elements(key, value)
     return constructor.lines_of_code
