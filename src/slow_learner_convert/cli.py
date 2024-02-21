@@ -4,7 +4,11 @@ from pprint import pprint
 
 import click
 
-from slow_learner_convert.constructor import make_class_from_class_def, Framework
+from slow_learner_convert.constructor import (
+    make_class_from_class_def,
+    make_class_from_assign,
+    Framework,
+)
 
 
 @click.command()
@@ -16,9 +20,14 @@ def cli(to: Framework, input_file: str):
         if isinstance(node, ast.ClassDef):
             pprint(make_class_from_class_def(to, node))
             print()
-        # if isinstance(node, ast.Assign):
-        #     print(ast.dump(node, indent=4))
-        #     print()
+        if (
+            isinstance(node, ast.Assign)
+            and isinstance(node.value, ast.Call)
+            and isinstance(node.value.func, ast.Namem)
+            and (node.value.func.id == "TypedDict")
+        ):
+            pprint(make_class_from_assign(to, node))
+            print()
 
 
 if __name__ == "__main__":
