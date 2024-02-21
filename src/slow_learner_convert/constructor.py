@@ -252,7 +252,7 @@ def make_class_from_assign(framework: Framework, assign: ast.Assign):
         ):
             v = key.value if isinstance(key, ast.Constant) else key.id
             warnings.warn(
-                f"{repr(v)}' is not a valid object attribute name. Skipping it.",
+                f"{repr(v)} is not a valid object attribute name. Skipping it.",
                 InvalidObjectAttribute,
             )
             continue

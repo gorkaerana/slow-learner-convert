@@ -23,7 +23,7 @@ def cli(to: Framework, input_file: str):
         if (
             isinstance(node, ast.Assign)
             and isinstance(node.value, ast.Call)
-            and isinstance(node.value.func, ast.Namem)
+            and isinstance(node.value.func, ast.Name)
             and (node.value.func.id == "TypedDict")
         ):
             pprint(make_class_from_assign(to, node))
