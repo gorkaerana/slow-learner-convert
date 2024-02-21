@@ -99,7 +99,7 @@ class BaseConstructor:
         if isinstance(target, ast.Name):
             return target.id
         elif isinstance(target, ast.Constant):
-            return repr(target.value)
+            return target.value
         else:
             raise NotImplementedError(f"{type(target)} not supported")
 
@@ -145,7 +145,7 @@ class DataclassConstructor(BaseConstructor):
     ) -> list[str]:
         """Keyword arguments mimic those of `dataclasses.dataclass`. See
         https://docs.python.org/3/library/dataclasses.html#dataclasses.dataclass"""
-        decorator = "@dataclass"
+        decorator = "@dataclasses.dataclass"
         decorator_kwargs = []
         for k in get_function_argument_names(self.initial_lines_of_code):
             if (k != "self") and ((value := locals()[k]) is not None):
@@ -186,7 +186,7 @@ class AttrsConstructor(BaseConstructor):
     ):
         """Keyword arguments match those of `attrs.define`. See
         https://www.attrs.org/en/stable/api.html#attrs.define"""
-        decorator = "@define"
+        decorator = "@attrs.define"
         decorator_kwargs = []
         for k in get_function_argument_names(self.initial_lines_of_code):
             if ((value := locals()[k]) is not _Nothing) and (k != "self"):
@@ -203,8 +203,9 @@ class MsgspecConstructor(BaseConstructor):
 
 
 class PydanticConstructor(BaseConstructor):
+    # TODO: `typing.NotRequired` is not supported by Pydantic
     def initial_lines_of_code(self):
-        return [f"class {self.class_name}(BaseModel):"]
+        return [f"class {self.class_name}(pydantic.BaseModel):"]
 
 
 CLASS_DEF_CONSTRUCTORS: dict[Framework, Type[BaseConstructor]] = {
