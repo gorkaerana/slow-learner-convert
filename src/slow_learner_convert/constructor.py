@@ -50,7 +50,7 @@ def get_function_argument_names(function: Callable) -> tuple[str, ...]:
     return function.__code__.co_varnames[: function.__code__.co_argcount]
 
 
-class BaseConstructor:
+class BaseClassDefConstructor:
     def __init__(self, class_name: str):
         self.class_name: str = class_name
         self.lines_of_code: list[str] = self.initial_lines_of_code()
@@ -74,7 +74,7 @@ class BaseConstructor:
         )
 
 
-class DataclassConstructor(BaseConstructor):
+class DataclassClassDefConstructor(BaseClassDefConstructor):
     def initial_lines_of_code(
         self,
         init: bool | None = None,
@@ -101,7 +101,7 @@ class DataclassConstructor(BaseConstructor):
         return [decorator, f"class {self.class_name}:"]
 
 
-class AttrsConstructor(BaseConstructor):
+class AttrsClassDefConstructor(BaseClassDefConstructor):
     def initial_lines_of_code(
         self,
         these: dict[str, "_CountingAttr"] | None | Type[_Nothing] = _Nothing,
@@ -142,26 +142,26 @@ class AttrsConstructor(BaseConstructor):
         return [decorator, f"class {self.class_name}:"]
 
 
-class MsgspecConstructor(BaseConstructor):
+class MsgspecClassDefConstructor(BaseClassDefConstructor):
     def initial_lines_of_code(self):
         return [f"class {self.class_name}(msgspec.Struct):"]
 
 
-class PydanticConstructor(BaseConstructor):
+class PydanticClassDefConstructor(BaseClassDefConstructor):
     def initial_lines_of_code(self):
         return [f"class {self.class_name}(BaseModel):"]
 
 
-CONSTRUCTORS: dict[Framework, Type[BaseConstructor]] = {
-    "dataclass": DataclassConstructor,
-    "attrs": AttrsConstructor,
-    "msgspec": MsgspecConstructor,
-    "pydantic": PydanticConstructor,
+CLASS_DEF_CONSTRUCTORS: dict[Framework, Type[BaseClassDefConstructor]] = {
+    "dataclass": DataclassClassDefConstructor,
+    "attrs": AttrsClassDefConstructor,
+    "msgspec": MsgspecClassDefConstructor,
+    "pydantic": PydanticClassDefConstructor,
 }
 
 
-def make_class(framework: Framework, class_def: ast.ClassDef):
-    constructor_class = CONSTRUCTORS.get(framework)
+def make_class_from_class_def(framework: Framework, class_def: ast.ClassDef):
+    constructor_class = CLASS_DEF_CONSTRUCTORS.get(framework)
     if constructor_class is None:
         raise NotImplementedError(f"Framework '{framework}' is not supported.")
     constructor = constructor_class(class_def.name)
