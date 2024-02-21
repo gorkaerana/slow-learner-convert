@@ -96,7 +96,7 @@ class DataclassConstructor(BaseConstructor):
             if (k != "self") and ((value := locals()[k]) is not None):
                 decorator_kwargs.append(f"{k}={value}")
         if decorator_kwargs:
-            prettied_decorator_kwargs = "\n".join(decorator_kwargs)
+            prettied_decorator_kwargs = ", ".join(decorator_kwargs)
             decorator = f"{decorator}({prettied_decorator_kwargs})"
         return [decorator, f"class {self.class_name}:"]
 
@@ -137,7 +137,7 @@ class AttrsConstructor(BaseConstructor):
             if ((value := locals()[k]) is not _Nothing) and (k != "self"):
                 decorator_kwargs.append(f"{k}={value}")
         if decorator_kwargs:
-            prettied_decorator_kwargs = "\n".join(decorator_kwargs)
+            prettied_decorator_kwargs = ", ".join(decorator_kwargs)
             decorator = f"{decorator}({prettied_decorator_kwargs})"
         return [decorator, f"class {self.class_name}:"]
 
