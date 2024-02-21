@@ -8,7 +8,7 @@ Following the example provided in the `slow_learner` [announcing post](https://n
 slow_learner_convert --input-file Release.py --output-file Release_msgspec.py --framework msgspec
 ```
 
-Currentlly four frameworks are supported:
+Currently four frameworks are supported:
 - [`dataclasses`](https://docs.python.org/3/library/dataclasses.html)
 - [`attrs`](https://www.attrs.org/en/stable/index.html)
 - [`msgspec`](https://jcristharif.com/msgspec/)
@@ -26,7 +26,7 @@ python3 -m pip install .
 ```
 
 ## Development
-I used [`rye`](https://rye-up.com/) (with [`uv`](https://github.com/astral-sh/uv)) while developing this:
+I used [`rye`](https://rye-up.com/) (with [`uv`](https://github.com/astral-sh/uv) backend) while developing this:
 ```bash
 git clone git@github.com:gorkaerana/slow_learner_convert.git
 cd slow_learner_convert
