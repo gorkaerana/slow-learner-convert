@@ -1,4 +1,0 @@
-pydantic
-attrs
-msgspec
-slow_learner

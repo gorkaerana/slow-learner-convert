@@ -1,0 +1,36 @@
+[project]
+name = "slow-learner-convert"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "Gorka Eraña", email = "eranagorka@gmail.com" }
+]
+dependencies = [
+    "pydantic",
+    "attrs",
+    "msgspec",
+    "slow_learner"
+    ]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[project.scripts]
+slow_learner_convert = "slow_learner_convert.cli:cli"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = [
+    "ruff",
+    "mypy",
+    "ipython"
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/slow_learner_convert"]
