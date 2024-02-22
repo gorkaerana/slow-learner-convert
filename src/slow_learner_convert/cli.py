@@ -25,7 +25,7 @@ def format_ast_import_from(node: ast.ImportFrom) -> str:
     return f"from {node.module} import {', '.join(format_ast_alias(n) for n in node.names)}"
 
 
-@click.command()
+@click.command(no_args_is_help=True)
 @click.option(
     "--framework",
     type=click.Choice(typing.get_args(Framework)),
