@@ -15,7 +15,7 @@ from typing import TypedDict
 
 
 class Foo(TypedDict):
-	bar: str
+    bar: str
 	
 
 Baz = TypedDict("Baz", {"qux": int})
