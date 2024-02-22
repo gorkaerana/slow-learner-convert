@@ -8,6 +8,42 @@ Following the example provided in the `slow_learner` [announcing post](https://n
 slow_learner_convert --input-file Release.py --output-file Release_msgspec.py --framework msgspec
 ```
 
+More specifically, if `example.py` contains
+
+```python
+from typing import TypedDict
+
+
+class Foo(TypedDict):
+	bar: str
+	
+
+Baz = TypedDict("Baz", {"qux"})
+```
+
+then the command line program
+
+```bash
+slow_learner_convert --input-file example.py --framework attrs
+```
+
+will generate `example_attrs.py`, containing following code.
+
+```python
+mport attrs
+from typing import TypedDict
+
+
+@attrs.define
+class Foo:
+    bar: str
+
+
+@attrs.define
+class Baz:
+    qux: int
+```
+
 Currently four frameworks are supported:
 - [`dataclasses`](https://docs.python.org/3/library/dataclasses.html)
 - [`attrs`](https://www.attrs.org/en/stable/index.html)
