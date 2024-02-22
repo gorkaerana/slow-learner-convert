@@ -1,11 +1,11 @@
-# slow_learner_convert
-A library to convert [`slow_learner`](https://github.com/nj-vs-vh/slow-learner) output to different data model frameworks.
+# slow-learner-convert
+A library to convert [`slow-learner`](https://github.com/nj-vs-vh/slow-learner) output to different data model frameworks.
 
 ## Usage
-Following the example provided in the `slow_learner` [announcing post](https://nj-vs-vh.name/project/slow-learner) and assuming `Release.py` is in the current directory, one would generate `msgspec` structs equivalent to the `typing.TypedDict` objects in `Release.py` by executing:
+Following the example provided in the `slow-learner` [announcing post](https://nj-vs-vh.name/project/slow-learner) and assuming `Release.py` is in the current directory, one would generate `msgspec` structs equivalent to the `typing.TypedDict` objects in `Release.py` by executing:
 
 ```bash
-slow_learner_convert --input-file Release.py --output-file Release_msgspec.py --framework msgspec
+slow-learner-convert --input-file Release.py --output-file Release_msgspec.py --framework msgspec
 ```
 
 More specifically, if `example.py` contains
@@ -24,7 +24,7 @@ Baz = TypedDict("Baz", {"qux": int})
 then the command line program
 
 ```bash
-slow_learner_convert --input-file example.py --framework attrs
+slow-learner-convert --input-file example.py --framework attrs
 ```
 
 will generate `example_attrs.py`, containing the following code.
@@ -53,8 +53,8 @@ Currently four frameworks are supported:
 ## Installation
 I'm hoping to publish this to [PyPI](https://pypi.org/). On the meantime:
 ```bash
-git clone git@github.com:gorkaerana/slow_learner_convert.git
-cd slow_learner_convert
+git clone git@github.com:gorkaerana/slow-learner-convert.git
+cd slow-learner-convert
 python3 -m venv .venv
 . .venv/bin/activate
 python3 -m pip install -U pip
@@ -64,7 +64,7 @@ python3 -m pip install .
 ## Development
 I used [`rye`](https://rye-up.com/) (with [`uv`](https://github.com/astral-sh/uv) backend) while developing this:
 ```bash
-git clone git@github.com:gorkaerana/slow_learner_convert.git
-cd slow_learner_convert
+git clone git@github.com:gorkaerana/slow-learner-convert.git
+cd slow-learner-convert
 rye sync
 ```
