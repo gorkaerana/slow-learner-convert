@@ -27,10 +27,10 @@ then the command line program
 slow_learner_convert --input-file example.py --framework attrs
 ```
 
-will generate `example_attrs.py`, containing following code.
+will generate `example_attrs.py`, containing the following code.
 
 ```python
-mport attrs
+import attrs
 from typing import TypedDict
 
 
