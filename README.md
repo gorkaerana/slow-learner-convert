@@ -51,7 +51,7 @@ Currently four frameworks are supported:
 - [`pydantic`](https://docs.pydantic.dev/latest/)
 
 ## Installation
-I'm hoping to publish this to PyPI. On the meantime:
+I'm hoping to publish this to [PyPI](https://pypi.org/). On the meantime:
 ```bash
 git clone git@github.com:gorkaerana/slow_learner_convert.git
 cd slow_learner_convert
