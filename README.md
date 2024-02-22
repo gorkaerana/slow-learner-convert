@@ -18,7 +18,7 @@ class Foo(TypedDict):
 	bar: str
 	
 
-Baz = TypedDict("Baz", {"qux"})
+Baz = TypedDict("Baz", {"qux": int})
 ```
 
 then the command line program
